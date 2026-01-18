@@ -1591,7 +1591,16 @@ class LogProc:
 class PowerTraderHub(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("PowerTrader - Hub")
+        # Load version from VERSION.md
+        version = "1.0.0"
+        try:
+            version_path = os.path.join(os.path.dirname(__file__), "VERSION.md")
+            with open(version_path, "r", encoding="utf-8") as f:
+                version = f.read().strip()
+        except Exception:
+            pass
+
+        self.title(f"PowerTrader AI Hub - v{version}")
         self.geometry("1400x820")
 
         # Hard minimum window size so the UI can't be shrunk to a point where panes vanish.
