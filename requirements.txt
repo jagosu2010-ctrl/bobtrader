@@ -10,3 +10,9 @@ kucoin-python
 yagmail
 discord-webhook
 python-telegram-bot
+
+# Configuration
+pyyaml
+
+# Risk management
+scipy

@@ -7,8 +7,8 @@ This document provides a comprehensive inventory of all modules, submodules, and
 **Project Name:** PowerTrader AI
 **Current Version:** 2.0.0
 **Build Date:** 2026-01-18
-**Total Python Files:** 15
-**Total Lines of Code:** 16,364
+**Total Python Files:** 16
+**Total Lines of Code:** 16,992
 **License:** Apache 2.0
 
 ## Module Directory Structure
@@ -587,9 +587,63 @@ Volatility-adjusted position sizing system using Average True Range (ATR) for op
 
 ---
 
+## Configuration Modules
+
+### 16. pt_config.py
+**Version:** 2.0.0 (NEW)
+**Location:** `C:\Users\hyper\workspace\PowerTrader_AI\pt_config.py`
+**Lines of Code:** 628
+**Status:** Production
+**Created:** 2026-01-18
+
+**Description:**
+Centralized configuration management system with validation, hot-reload, and environment variable support.
+
+**Key Classes:**
+- `TradingConfig` - Trading settings dataclass
+- `NotificationConfig` - Notification settings dataclass
+- `ExchangeConfig` - Exchange API keys dataclass
+- `AnalyticsConfig` - Analytics settings dataclass
+- `PositionSizingConfig` - Position sizing settings dataclass
+- `CorrelationConfig` - Correlation settings dataclass
+- `SystemConfig` - System settings dataclass
+- `PowerTraderConfig` - Unified configuration dataclass
+- `ConfigValidator` - Configuration validation class
+- `ConfigManager` - Configuration manager singleton
+
+**Key Features:**
+- Unified configuration dataclasses for all system components
+- ConfigValidator with schema validation and constraint checking
+- ConfigManager singleton pattern for global access
+- YAML-based configuration (more readable than JSON)
+- Environment variable overrides with POWERTRADER_ prefix
+- Migration path from existing gui_settings.json
+- Hot-reload support with file watcher
+- Callback system for configuration change notifications
+- Export methods (dict, JSON) for GUI integration
+- Default configuration file generation
+- Comprehensive validation with detailed error messages
+
+**Dependencies:**
+- yaml (YAML configuration)
+- json (environment variable parsing)
+- hashlib (config hash for change detection)
+- threading (file watcher)
+- pathlib (path handling)
+
+**Integration Points:**
+- Ready for integration with pt_hub.py (settings management)
+- Ready for integration with pt_trader.py (trading parameters)
+- Ready for integration with pt_thinker.py (AI parameters)
+- Ready for integration with pt_notifications.py (notification settings)
+- Ready for integration with pt_analytics.py (analytics settings)
+- Standalone usage for configuration management
+
+---
+
 ## Testing Modules
 
-### 15. test_notifications.py
+### 17. test_notifications.py
 **Version:** 2.0.0 (NEW)
 **Location:** `C:\Users\hyper\workspace\PowerTrader_AI\test_notifications.py`
 **Lines of Code:** 205
@@ -622,7 +676,7 @@ Automated unit tests for the notification system.
 
 ## Configuration & Data Files
 
-### 16. requirements.txt
+### 17. requirements.txt
 **Version:** 2.0.0
 **Location:** `C:\Users\hyper\workspace\PowerTrader_AI\requirements.txt`
 **Purpose:** Python dependencies
@@ -700,9 +754,12 @@ flake8
 | pt_notifications.py | 2.0.0 | Production | 876 | 2026-01-18 | 2026-01-18 |
 | pt_notifications_examples.py | 2.0.0 | Documentation | 371 | 2026-01-18 | 2026-01-18 |
 | pt_volume.py | 2.0.0 | Production | 128 | 2026-01-18 | 2026-01-18 |
+| pt_correlation.py | 2.0.0 | Production | 447 | 2026-01-18 | 2026-01-18 |
+| pt_position_sizing.py | 2.0.0 | Production | 414 | 2026-01-18 | 2026-01-18 |
 | test_notifications.py | 2.0.0 | Testing | 205 | 2026-01-18 | 2026-01-18 |
+| pt_config.py | 2.0.0 | Production | 628 | 2026-01-18 | 2026-01-18 |
 
-**Total:** 13 Python files, 15,503 lines of code
+**Total:** 16 Python files, 16,992 lines of code
 
 ---
 
@@ -738,6 +795,25 @@ pt_volume.py (Volume Analysis) ← NEW
     ├── SMA/EMA calculations
     ├── VWAP calculations
     └── Z-score anomaly detection
+
+pt_correlation.py (Correlation Analysis) ← NEW
+    ├── Portfolio correlation calculation
+    ├── Historical correlation tracking
+    └── Diversification alerts
+
+pt_position_sizing.py (Position Sizing) ← NEW
+    ├── ATR calculation
+    ├── True Range calculation
+    └── Risk-adjusted position sizing
+
+pt_config.py (Configuration Management) ← NEW
+    ├── TradingConfig (trading parameters)
+    ├── NotificationConfig (notification settings)
+    ├── ExchangeConfig (API keys)
+    ├── AnalyticsConfig (analytics settings)
+    ├── PositionSizingConfig (risk settings)
+    ├── CorrelationConfig (correlation settings)
+    └── SystemConfig (logging/debug)
 ```
 
 ---
@@ -821,13 +897,13 @@ pt_volume.py (Volume Analysis) ← NEW
 - pt_volume.py (volume analysis complete)
 - pt_correlation.py (correlation analysis complete)
 - pt_position_sizing.py (position sizing complete)
+- pt_config.py (configuration management complete)
 
 ---
 
 ## Future Module Plans (v3.0.0)
 
 ### Planned Modules
-- pt_config.py - Configuration management system
 - pt_logging.py - Structured logging system
 - pt_risk_management.py - Advanced risk management
 - pt_rebalancer.py - Portfolio rebalancing
