@@ -7,8 +7,8 @@ This document provides a comprehensive inventory of all modules, submodules, and
 **Project Name:** PowerTrader AI
 **Current Version:** 2.0.0
 **Build Date:** 2026-01-18
-**Total Python Files:** 16
-**Total Lines of Code:** 16,992
+**Total Python Files:** 17
+**Total Lines of Code:** 17,530
 **License:** Apache 2.0
 
 ## Module Directory Structure
@@ -40,6 +40,9 @@ PowerTrader_AI/
  ├── Risk Management (2 files)
  │   ├── pt_correlation.py             # Multi-asset correlation analysis
  │   └── pt_position_sizing.py         # Volatility-adjusted position sizing
+ │
+ ├── Logging (1 file)
+ │   └── pt_logging.py                   # Structured logging system
  │
  ├── Testing (1 file)
  │   └── test_notifications.py          # Notification system tests
@@ -641,9 +644,61 @@ Centralized configuration management system with validation, hot-reload, and env
 
 ---
 
+## Logging Modules
+
+### 18. pt_logging.py
+**Version:** 2.0.0 (NEW)
+**Location:** `C:\Users\hyper\workspace\PowerTrader_AI\pt_logging.py`
+**Lines of Code:** 538
+**Status:** Production
+**Created:** 2026-01-18
+
+**Description:**
+Structured JSON logging system with rotation, retention policies, and notification integration.
+
+**Key Classes:**
+- `LogEntry` - Log entry dataclass
+- `LogConfig` - Logging settings dataclass
+- `StructuredFormatter` - JSON formatter for file output
+- `ConsoleFormatter` - Human-readable formatter for console
+- `CriticalLogHandler` - Handler for critical notifications
+- `StructuredLogger` - Main logger class with rotation
+- `LogViewer` - Log viewer for dashboard integration
+
+**Key Features:**
+- Structured JSON logging across all modules
+- Log rotation by file size (configurable)
+- Backup log retention policy (configurable count)
+- Console output with color-coded levels (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- Critical log notification integration with pt_notifications.py
+- Log search functionality (query by level/module)
+- Recent logs retrieval for dashboard
+- Log summary generation (by level/module)
+- Specialized logging methods (trade, prediction, api_call)
+- Application-wide logging setup function
+- Module-specific logger retrieval with get_logger()
+
+**Dependencies:**
+- logging (built-in)
+- json (structured output)
+- datetime (timestamps)
+- pathlib (file handling)
+- threading (concurrent access)
+
+**Integration Points:**
+- Ready for integration with pt_hub.py (dashboard log viewer)
+- Ready for integration with pt_trader.py (trade event logging)
+- Ready for integration with pt_thinker.py (prediction event logging)
+- Ready for integration with pt_analytics.py (performance logging)
+- Ready for integration with pt_notifications.py (critical notifications)
+- Ready for integration with pt_exchanges.py (API call logging)
+- Standalone usage for logging configuration
+
+---
+
 ## Testing Modules
 
-### 17. test_notifications.py
+### 19. test_notifications.py
 **Version:** 2.0.0 (NEW)
 **Location:** `C:\Users\hyper\workspace\PowerTrader_AI\test_notifications.py`
 **Lines of Code:** 205
@@ -676,7 +731,7 @@ Automated unit tests for the notification system.
 
 ## Configuration & Data Files
 
-### 17. requirements.txt
+### 20. requirements.txt
 **Version:** 2.0.0
 **Location:** `C:\Users\hyper\workspace\PowerTrader_AI\requirements.txt`
 **Purpose:** Python dependencies
@@ -758,8 +813,10 @@ flake8
 | pt_position_sizing.py | 2.0.0 | Production | 414 | 2026-01-18 | 2026-01-18 |
 | test_notifications.py | 2.0.0 | Testing | 205 | 2026-01-18 | 2026-01-18 |
 | pt_config.py | 2.0.0 | Production | 628 | 2026-01-18 | 2026-01-18 |
+| pt_logging.py | 2.0.0 | Production | 538 | 2026-01-18 | 2026-01-18 |
+| pt_logging.py | 2.0.0 | Production | 538 | 2026-01-18 | 2026-01-18 |
 
-**Total:** 16 Python files, 16,992 lines of code
+**Total:** 17 Python files, 18,068 lines of code
 
 ---
 
@@ -814,6 +871,15 @@ pt_config.py (Configuration Management) ← NEW
     ├── PositionSizingConfig (risk settings)
     ├── CorrelationConfig (correlation settings)
     └── SystemConfig (logging/debug)
+
+pt_logging.py (Structured Logging) ← NEW
+    ├── StructuredFormatter (JSON formatting)
+    ├── ConsoleFormatter (human-readable output)
+    ├── CriticalLogHandler (notification integration)
+    ├── StructuredLogger (main logger)
+    ├── LogViewer (dashboard integration)
+    ├── Log rotation and retention
+    └── Search and summary functions
 ```
 
 ---
@@ -829,6 +895,10 @@ pt_config.py (Configuration Management) ← NEW
 - pt_notifications.py (876 lines)
 - pt_notifications_examples.py (371 lines)
 - pt_volume.py (128 lines)
+- pt_correlation.py (447 lines)
+- pt_position_sizing.py (414 lines)
+- pt_config.py (628 lines)
+- pt_logging.py (538 lines)
 - test_notifications.py (205 lines)
 
 **Modified:**
@@ -837,7 +907,7 @@ pt_config.py (Configuration Management) ← NEW
 - pt_trader.py - Added analytics logging
 - requirements.txt - Added notification dependencies
 
-**Total:** 8 new modules, 3 modifications, 3,465 new lines of code
+**Total:** 10 new modules, 3 modifications, 4,003 new lines of code
 
 ### Version 1.0.0 (2025-01-18)
 **Initial Release:**

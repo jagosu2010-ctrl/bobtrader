@@ -97,37 +97,31 @@ This roadmap outlines the development history, current status, and future plans 
   - Callback system for configuration change notifications
   - Export methods (dict, JSON) for GUI integration
   - Default configuration file generation
-  - Comprehensive main testing function with examples
+    - Comprehensive main testing function with examples
+
+#### Structured Logging System
+- [x] **StructuredLogger** (pt_logging.py - 538 lines)
+  - LogEntry and LogConfig dataclasses
+  - StructuredFormatter for JSON log output
+  - ConsoleFormatter for human-readable console logs
+  - StructuredLogger class with rotation and retention
+  - LogViewer class for dashboard integration
+  - setup_logging() function for application-wide logging
+  - get_logger() function for module-specific loggers
+  - Log rotation by file size (configurable max size)
+  - Backup log retention policy (configurable count)
+  - Critical notification integration with pt_notifications.py
+  - Log search functionality (query by level/module)
+  - Recent logs retrieval for dashboard
+  - Log summary generation (by level/module)
+  - Specialized logging methods (trade, prediction, api_call)
+  - Console output support with color-coded levels
+  - JSON file logging for structured data
+  - Main testing function with comprehensive examples
 
 ---
 
 ## Version 3.0.0 - Planned Features (Future)
-
-### High Priority 🔴
-
-#### Structured Logging System
-**Status:** Not Started
-**Module:** pt_logging.py (planned)
-**Lines:** ~400-500 estimated
-**Dependencies:** python-json-logger, loguru or structlog
-**Description:**
-- Structured JSON logging across all modules
-- Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
-- File rotation and retention policies
-- Log aggregation and search
-- Integration with notification system for critical logs
-- Performance metrics logging
-- Dashboard log viewer in pt_hub.py
-
-**Implementation Details:**
-```python
-class StructuredLogger:
-    def setup_logging(self, config: Dict[str, Any]) -> None
-    def log_trade(self, trade: TradeData) -> None
-    def log_prediction(self, prediction: PredictionData) -> None
-    def log_error(self, error: ErrorData) -> None
-    def search_logs(self, query: Dict[str, Any]) -> List[LogEntry]
-```
 
 ### Medium Priority 🟡
 

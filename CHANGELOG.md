@@ -128,8 +128,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    - File watcher for automatic config reloading
    - Callback system for configuration change notifications
    - Export methods (dict, JSON) for GUI integration
-   - Default configuration file generation
-   - Comprehensive main testing function with examples
+    - Default configuration file generation
+    - Comprehensive main testing function with examples
+
+ - **Structured Logging System** (pt_logging.py - 538 lines)
+   - LogEntry dataclass for structured log entries
+   - LogConfig dataclass for logging settings (level, file, rotation)
+   - StructuredFormatter for JSON log output
+   - ConsoleFormatter for human-readable console logs
+   - CriticalLogHandler for critical log notifications
+   - StructuredLogger class with rotation and retention policies
+   - LogViewer class for dashboard integration
+   - setup_logging() function for application-wide logging
+   - get_logger() function for module-specific loggers
+   - Log rotation by file size (configurable max size)
+   - Backup log retention policy (configurable count)
+   - Critical notification integration with pt_notifications.py
+   - Log search functionality (query by level/module)
+   - Recent logs retrieval for dashboard
+   - Log summary generation (by level/module)
+   - Specialized logging methods (trade, prediction, api_call)
+   - Console output support with color-coded levels
+   - JSON file logging for structured data
+   - Main testing function with comprehensive examples
 
 ### Changed
 - **pt_trader.py** - Integrated analytics logging into _record_trade() method (~50 lines)
