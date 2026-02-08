@@ -5,11 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-01-18
+
+### Added
+- **Strategy Sandbox**: New frontend page for backtesting strategies (Cointrade, SMA) with visual charts.
+- **Backend Strategy API**: New endpoint `POST /api/strategy/backtest` to run simulations.
+- **Multi-Exchange Skeleton**: Added `KuCoinConnector` and `BinanceConnector` classes.
+- **Persistence**: `AnalyticsManager` now connects to the real `hub_data/trades.db`.
+
 ## [2.2.0] - 2026-01-18
 
 ### Added
 - **Real-Time Frontend**: Upgraded `Dashboard.tsx` to use WebSockets (`useWebSocket` hook) for live trade and account updates.
-- **Advanced Cointrade Simulation**: Enhanced `CointradeAdapter` to simulate MACD, RSI, and Bollinger Bands signals, proving the integration point.
+- **Advanced Cointrade Simulation**: Enhanced `CointradeAdapter` to simulate complex technical indicators (MACD, RSI, Bollinger Bands) and signal generation.
 - **Improved Cointrade Structure**: Prepared `backend/src/modules/cointrade` for submodule injection.
 - **Dashboard Hooks**: Added `useWebSocket` hook for reusable real-time data connection.
 
