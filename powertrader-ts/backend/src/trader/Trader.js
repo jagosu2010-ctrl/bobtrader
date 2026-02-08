@@ -1,50 +1,46 @@
-import { IExchangeConnector } from "../engine/connector/IExchangeConnector";
-import { ConfigManager } from "../config/ConfigManager";
-import { AnalyticsManager } from "../analytics/AnalyticsManager";
-
-export class Trader {
-    private connector: IExchangeConnector;
-    private config: ConfigManager;
-    private analytics: AnalyticsManager;
-    private activeTrades: Map<string, any> = new Map();
-    private dcaLevels: number[];
-    private maxDcaBuys: number;
-
-    constructor(connector: IExchangeConnector) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Trader = void 0;
+const IExchangeConnector_1 = require("../engine/connector/IExchangeConnector");
+const ConfigManager_1 = require("../config/ConfigManager");
+const AnalyticsManager_1 = require("../analytics/AnalyticsManager");
+class Trader {
+    connector;
+    config;
+    analytics;
+    activeTrades = new Map();
+    dcaLevels;
+    maxDcaBuys;
+    constructor(connector) {
         this.connector = connector;
-        this.config = ConfigManager.getInstance();
-        this.analytics = new AnalyticsManager();
-
+        this.config = ConfigManager_1.ConfigManager.getInstance();
+        this.analytics = new AnalyticsManager_1.AnalyticsManager();
         const cfg = this.config.get("trading");
         this.dcaLevels = cfg.dca_levels || [-2.5, -5.0, -10.0, -20.0, -30.0, -40.0, -50.0];
         this.maxDcaBuys = cfg.max_dca_buys_per_24h || 2;
     }
-
-    public async start(): Promise<void> {
+    async start() {
         console.log("Starting Trader Engine...");
         setInterval(() => this.tick(), 10000); // 10 seconds tick
     }
-
-    private async tick(): Promise<void> {
-        const coins = this.config.get("trading.coins") as string[];
-        if (!coins) return;
-
+    async tick() {
+        const coins = this.config.get("trading.coins");
+        if (!coins)
+            return;
         for (const coin of coins) {
             try {
                 await this.processCoin(coin);
-            } catch (e) {
+            }
+            catch (e) {
                 console.error(`Error processing ${coin}:`, e);
             }
         }
     }
-
-    private async processCoin(coin: string): Promise<void> {
+    async processCoin(coin) {
         const pair = `${coin}-USD`;
         const currentPrice = await this.connector.fetchTicker(pair);
-
         // Mock position retrieval (In real app, fetch from DB or Exchange)
         let position = this.activeTrades.get(coin);
-
         // 1. Check for ENTRY
         if (!position) {
             // Logic: If Thinker signal is LONG, buy
@@ -53,11 +49,9 @@ export class Trader {
             // if (signal === 'LONG') this.enterTrade(coin, currentPrice);
             return;
         }
-
         // 2. Calculate PnL
         const pnlPct = ((currentPrice - position.avgPrice) / position.avgPrice) * 100;
         console.log(`[Trader] ${coin} Price: ${currentPrice} PnL: ${pnlPct.toFixed(2)}%`);
-
         // 3. Check for DCA (Dollar Cost Averaging)
         // Only DCA if PnL is negative and we haven't hit max DCA count
         if (pnlPct < 0 && position.dcaCount < this.maxDcaBuys) {
@@ -68,18 +62,15 @@ export class Trader {
             const nextLevel = this.dcaLevels[levelIndex] !== undefined
                 ? this.dcaLevels[levelIndex]
                 : this.dcaLevels[this.dcaLevels.length - 1]; // Repeat last level if out of bounds
-
             if (pnlPct <= nextLevel) {
                 console.log(`[Trader] Triggering DCA for ${coin} at ${pnlPct.toFixed(2)}% (Level: ${nextLevel}%)`);
                 await this.executeDCA(coin, currentPrice, position);
             }
         }
-
         // 4. Check for Trailing Stop Sell
         // Logic: if pnl > start_pct, activate trail. if price < trail_line, sell.
         const trailingCfg = this.config.get("trading");
         const startPct = position.dcaCount === 0 ? trailingCfg.pm_start_pct_no_dca : trailingCfg.pm_start_pct_with_dca;
-
         // Activate trailing
         if (pnlPct >= startPct) {
             if (!position.trailActive) {
@@ -88,7 +79,8 @@ export class Trader {
                 // Trail line is gap% below peak
                 position.trailLine = currentPrice * (1 - (trailingCfg.trailing_gap_pct / 100));
                 console.log(`[Trader] Activated Trailing Stop for ${coin} at ${currentPrice}. Line: ${position.trailLine}`);
-            } else {
+            }
+            else {
                 // Update peak and trail line if price moves up
                 if (currentPrice > position.trailPeak) {
                     position.trailPeak = currentPrice;
@@ -101,32 +93,25 @@ export class Trader {
                 }
             }
         }
-
         // Execute Sell if trail hit
         if (position.trailActive && currentPrice < position.trailLine) {
             console.log(`[Trader] Trailing stop hit for ${coin}. Selling at ${currentPrice}.`);
             await this.exitTrade(coin, currentPrice, position, "trailing_stop");
         }
     }
-
-    private async executeDCA(coin: string, price: number, position: any): Promise<void> {
+    async executeDCA(coin, price, position) {
         const dcaMultiplier = this.config.get("trading.dca_multiplier");
         const amount = position.amount * dcaMultiplier;
-
         console.log(`[Trader] Executing DCA Buy: ${amount} ${coin} @ ${price}`);
-
         // Execute Buy Order via Connector
         const pair = `${coin}-USD`;
         await this.connector.createOrder(pair, 'market', 'buy', amount);
-
         // Update position average logic
         const totalCost = (position.avgPrice * position.amount) + (price * amount);
         const totalAmount = position.amount + amount;
-
         position.amount = totalAmount;
         position.avgPrice = totalCost / totalAmount;
         position.dcaCount++;
-
         // Log to analytics
         this.analytics.logTrade({
             symbol: coin,
@@ -137,13 +122,10 @@ export class Trader {
             timestamp: Date.now()
         });
     }
-
-    private async exitTrade(coin: string, price: number, position: any, reason: string): Promise<void> {
+    async exitTrade(coin, price, position, reason) {
         console.log(`[Trader] Executing Sell: ${position.amount} ${coin} @ ${price}`);
-
         const pair = `${coin}-USD`;
         await this.connector.createOrder(pair, 'market', 'sell', position.amount);
-
         this.analytics.logTrade({
             symbol: coin,
             side: 'sell',
@@ -152,7 +134,8 @@ export class Trader {
             type: reason,
             timestamp: Date.now()
         });
-
         this.activeTrades.delete(coin);
     }
 }
+exports.Trader = Trader;
+//# sourceMappingURL=Trader.js.map
