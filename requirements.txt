@@ -1,12 +1,24 @@
-# Update these lines in bobtrader/requirements.txt
+# Core Exchange SDKs
+kucoin-universal-sdk
 requests
+setuptools
+
+# Data Analysis & Risk Management
+# (Required for pt_correlation.py and pt_risk_dashboard.py)
+pandas
+numpy
+scipy
+
+# System & Performance
 psutil
-matplotlib
 colorama
+
+# Graphics & Dashboards
+matplotlib
+
+# Security & Encryption
 cryptography
 PyNaCl
-kucoin-universal-sdk  # Replaces kucoin-python
-setuptools            # Add this as a fallback for older modules
 
 # Notifications
 yagmail
@@ -15,6 +27,3 @@ python-telegram-bot
 
 # Configuration
 pyyaml
-
-# Risk management
-scipy
