@@ -1,10 +1,12 @@
+# Update these lines in bobtrader/requirements.txt
 requests
 psutil
 matplotlib
 colorama
 cryptography
 PyNaCl
-kucoin-python
+kucoin-universal-sdk  # Replaces kucoin-python
+setuptools            # Add this as a fallback for older modules
 
 # Notifications
 yagmail
