@@ -1,0 +1,35 @@
+import alpaca_trade_api as alpaca
+import robin_stocks.robinhood as rh
+from pt_config import ConfigManager
+
+class ExchangeBridge:
+    def __init__(self):
+        self.cm = ConfigManager().get()
+        self.provider = self.cm.exchange.get("active_provider", "alpaca")
+        self._initialize_session()
+
+    def _initialize_session(self):
+        if self.provider == "alpaca":
+            cfg = self.cm.alpaca
+            self.session = alpaca.REST(cfg['api_key'], cfg['api_secret'], cfg['base_url'])
+        elif self.provider == "robinhood":
+            cfg = self.cm.robinhood
+            rh.login(cfg['username'], cfg['password'], mfa_code=cfg['mfa_code'])
+            self.session = rh
+
+    def get_price(self, symbol, asset_type="crypto"):
+        """Abstracted price fetcher for both Stocks and Crypto."""
+        if self.provider == "alpaca":
+            # Alpaca unified price fetch
+            return self.session.get_latest_crypto_orderbook(symbol).trades[0].p if asset_type == "crypto" \
+                   else self.session.get_latest_trade(symbol).price
+        
+        elif self.provider == "robinhood":
+            if asset_type == "crypto":
+                return float(rh.crypto.get_crypto_quote(symbol)['mark_price'])
+            else:
+                return float(rh.stocks.get_latest_price(symbol)[0])
+
+    def place_order(self, symbol, qty, side="buy"):
+        # Logic for Alpaca vs Robinhood order execution
+        pass

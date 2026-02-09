@@ -11,15 +11,24 @@ class RiskDashboard(ttk.Frame):
         super().__init__(parent, *args, **kwargs)
         self.coin_list = coin_list
 
+        # 1. Establish Configuration with dictionary-safe access
         cm = ConfigManager()
-        self.db_path = cm.get().analytics.database_path
+        analytics_cfg = cm.get().analytics
+        
+        if isinstance(analytics_cfg, dict):
+            self.db_path = analytics_cfg.get("database_path", "hub_data/trades.db")
+        else:
+            # Fallback to default path if config section is missing
+            self.db_path = "hub_data/trades.db"
 
+        # 2. Initialize Analyzers
         self.corr_analyzer = CorrelationAnalyzer(self.db_path)
         self.sizer = PositionSizer(self.db_path)
 
         self._setup_ui()
 
     def _setup_ui(self):
+        """Initializes the layout for correlation and position sizing."""
         # Top control bar
         top = ttk.Frame(self)
         top.pack(fill="x", padx=10, pady=10)
@@ -37,14 +46,14 @@ class RiskDashboard(ttk.Frame):
         paned.add(left_frame, weight=1)
         paned.add(right_frame, weight=1)
 
-        # --- Correlation Matrix ---
+        # --- Correlation Matrix Section ---
         corr_frame = ttk.LabelFrame(left_frame, text="Correlation Matrix (30 Days)")
         corr_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
-        self.matrix_canvas = tk.Canvas(corr_frame, bg="#000000") # Placeholder background
+        self.matrix_canvas = tk.Canvas(corr_frame, bg="#000000") 
         self.matrix_canvas.pack(fill="both", expand=True)
 
-        # --- Position Sizing ---
+        # --- Position Sizing Section ---
         size_frame = ttk.LabelFrame(right_frame, text="Volatility-Adjusted Position Sizing")
         size_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
@@ -72,48 +81,46 @@ class RiskDashboard(ttk.Frame):
         self.size_tree.pack(fill="both", expand=True, padx=5, pady=5)
 
     def refresh(self):
+        """Triggers the background analysis thread."""
         self.status_lbl.config(text="Analyzing...")
         threading.Thread(target=self._run_analysis, daemon=True).start()
 
     def _run_analysis(self):
+        """Calculates matrix data in background to prevent UI freeze."""
         try:
-            # Correlation
+            # Correlation calculation
             matrix = self.corr_analyzer.calculate_correlation_matrix(self.coin_list)
 
+            # Update UI on main thread
             self.after(0, lambda: self._draw_matrix(matrix))
-            self.after(0, lambda: self.status_lbl.config(text=f"Updated {os.times()}")) # simpler timestamp
+            self.after(0, lambda: self.status_lbl.config(text="Updated Successfully"))
 
         except Exception as e:
-            self.after(0, lambda: self.status_lbl.config(text=f"Error: {e}"))
+            self.after(0, lambda: self.status_lbl.config(text=f"Analysis Error: {e}"))
 
     def _draw_matrix(self, matrix):
+        """Renders the heat-map on the canvas."""
         self.matrix_canvas.delete("all")
-
         n = len(self.coin_list)
         if n == 0: return
 
+        # Ensure dynamic scaling to fit current window size
         w = self.matrix_canvas.winfo_width()
         h = self.matrix_canvas.winfo_height()
-
         cell_w = w / (n + 1)
         cell_h = h / (n + 1)
 
-        # Draw headers
+        # Draw Labels
         for i, coin in enumerate(self.coin_list):
             self.matrix_canvas.create_text((i + 1.5) * cell_w, 0.5 * cell_h, text=coin, fill="white")
             self.matrix_canvas.create_text(0.5 * cell_w, (i + 1.5) * cell_h, text=coin, fill="white")
 
-        # Draw grid
+        # Draw Matrix Cells with Color Heatmap
         for i, coin_a in enumerate(self.coin_list):
             for j, coin_b in enumerate(self.coin_list):
-                if i == j:
-                    val = 1.0
-                else:
-                    val = matrix.get(coin_a, {}).get(coin_b, 0.0)
+                val = 1.0 if i == j else matrix.get(coin_a, {}).get(coin_b, 0.0)
 
-                # Color map: Red (1.0) -> Green (0.0)
-                # Actually Red (1.0) -> Yellow -> Green (0.0) or Blue (-1.0)
-                # Simple: Red > 0.7, Green < 0.3, Yellow otherwise
+                # Color logic: Red (Strong Positive), Green (Low), Yellow (Moderate)
                 if val > 0.7:
                     color = "#880000" # Dark Red
                 elif val < 0.3:
@@ -121,37 +128,31 @@ class RiskDashboard(ttk.Frame):
                 else:
                     color = "#444400" # Dark Yellow
 
-                x1 = (i + 1) * cell_w
-                y1 = (j + 1) * cell_h
-                x2 = x1 + cell_w
-                y2 = y1 + cell_h
+                x1, y1 = (i + 1) * cell_w, (j + 1) * cell_h
+                x2, y2 = x1 + cell_w, y1 + cell_h
 
-                self.matrix_canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="black")
+                self.matrix_canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="#222222")
                 self.matrix_canvas.create_text((x1+x2)/2, (y1+y2)/2, text=f"{val:.2f}", fill="white")
 
     def _calculate_sizing(self):
+        """Computes recommended sizes based on balance and risk."""
         balance = self.balance_var.get()
         risk_pct = self.risk_var.get() / 100.0
 
-        # We need volatility data. If we don't have DB data, generate sample?
-        # Ideally fetch from DB populated by pt_analytics/pt_volume
-        # For now, let's assume PositionSizer can get data or we mock it if empty
-
-        # To make this real, we'd need price history in the DB.
-        # PositionSizer.get_volatility needs trade history or OHLCV in DB.
-        # Currently pt_analytics stores trades.
-
-        # I'll just show placeholders if DB empty
         for i in self.size_tree.get_children():
             self.size_tree.delete(i)
 
         for coin in self.coin_list:
-            # Mock calculation if DB empty
+            # Fetch volatility from DB logic
             metrics = self.sizer.get_volatility(coin)
-            # If metrics is dummy, we show defaults
-
-            rec = self.sizer.calculate_position_size(balance, risk_pct, metrics.atr_pct if metrics else 0.05)
+            # Default to 5% ATR if data unavailable
+            atr_val = metrics.atr_pct if (metrics and hasattr(metrics, 'atr_pct')) else 0.05
+            
+            rec = self.sizer.calculate_position_size(balance, risk_pct, atr_val)
 
             self.size_tree.insert("", "end", values=(
-                coin, f"{rec.metrics.atr_pct*100:.1f}%", f"${rec.recommended_size_usd:,.2f}", f"{rec.volatility_factor:.2f}x"
+                coin, 
+                f"{atr_val*100:.1f}%", 
+                f"${rec.recommended_size_usd:,.2f}", 
+                f"{rec.volatility_factor:.2f}x"
             ))

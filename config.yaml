@@ -1,0 +1,79 @@
+# PowerTrader AI Configuration
+# Version: 2.1.0
+# Last Updated: 2026-02-08
+
+trading:
+  # BTC now uses its own folder within this directory
+  main_neural_dir: "D:/Production/PowerTrader_AI"
+  coins:
+    - "BTC"
+    - "ETH"
+    - "XRP"
+    - "BNB"
+    - "DOGE"
+  
+  # Entry and DCA Strategy
+  trade_start_level: 3
+  start_allocation_pct: 0.005
+  dca_multiplier: 2.0
+  dca_levels:
+    - -2.5
+    - -5.0
+    - -10.0
+    - -20.0
+    - -30.0
+    - -40.0
+    - -50.0
+  max_dca_buys_per_24h: 2
+
+  # Exit Strategy (Trailing Profit Margin)
+  pm_start_pct_no_dca: 5.0
+  pm_start_pct_with_dca: 2.5
+  trailing_gap_pct: 0.5
+
+  # System Timing
+  ui_refresh_seconds: 1.0
+  chart_refresh_seconds: 10.0
+
+system:
+  # Logging and Maintenance
+  log_level: "INFO"
+  log_file: "hub_data/powertrader.log"
+  
+  # Rotation: maintains 48 hours of logs by rotating daily
+  log_retention_hours: 48
+  
+  # Set to True to see line numbers and millisecond timestamps
+  debug_mode: false
+
+notifications:
+  enabled: true
+  platforms:
+    email: true
+    discord: true
+    telegram: true
+  # Fill these in the Hub Settings UI to generate encrypted entries
+  email_address: ""
+  discord_webhook_url: ""
+  telegram_bot_token: ""
+  telegram_chat_id: ""
+
+analytics:
+  enabled: true
+  database_path: "hub_data/trades.db"
+  retention_days: 365
+
+exchange:
+  active_provider: "alpaca" # Options: "alpaca", "robinhood"
+  is_sandbox: true          # Use "true" for Alpaca Paper Trading
+
+alpaca:
+  api_key: "YOUR_ALPACA_KEY"
+  api_secret: "YOUR_ALPACA_SECRET"
+  base_url: "https://paper-api.alpaca.markets"
+
+robinhood:
+  # Note: Official Crypto API uses RSA keys; Stocks use login credentials
+  username: "your_email@example.com"
+  password: "your_password"
+  mfa_code: "YOUR_AUTH_APP_SECRET"

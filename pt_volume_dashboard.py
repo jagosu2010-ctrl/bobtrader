@@ -16,6 +16,7 @@ class VolumeDashboard(ttk.Frame):
         self.analyzer = VolumeAnalyzer()
 
     def _setup_ui(self):
+        """Initializes the dashboard layout and widgets."""
         # Top control bar
         top = ttk.Frame(self)
         top.pack(fill="x", padx=10, pady=10)
@@ -68,10 +69,12 @@ class VolumeDashboard(ttk.Frame):
         self.refresh()
 
     def refresh(self):
+        """Triggers a data refresh in a background thread to prevent UI freezing."""
         self.status_lbl.config(text="Fetching data...")
         threading.Thread(target=self._fetch_data, daemon=True).start()
 
     def _fetch_data(self):
+        """Background data fetching and analysis logic."""
         try:
             end = datetime.now()
             start = end - timedelta(days=30)
@@ -85,33 +88,57 @@ class VolumeDashboard(ttk.Frame):
 
             # Analyze recent candles
             metrics_list = []
-            analyzer = VolumeAnalyzer() # Fresh analyzer for streaming
+            analyzer = VolumeAnalyzer() 
             for c in candles:
                 prev_ema = metrics_list[-1].volume_ema if metrics_list else None
                 m = analyzer.analyze_candle(c, prev_ema)
                 metrics_list.append(m)
 
+            # Push UI update back to main thread
             self.after(0, lambda: self._update_ui(profile, metrics_list[-50:]))
 
         except Exception as e:
-            self.after(0, lambda: self.status_lbl.config(text=f"Error: {e}"))
+            error_msg = str(e)
+            self.after(0, lambda: self.status_lbl.config(text=f"Error: {error_msg}"))
 
-    def _update_ui(self, profile: VolumeProfile, recent_metrics):
-        # Update profile
+    def _update_ui(self, profile, recent_metrics):
+        """Refreshes the UI with calculated metrics and candle history."""
+        # Update profile labels - FIX: Closed bracket for P90 (High)
         self.profile_labels["Average Volume"].config(text=f"Average: {profile.avg_volume:,.0f}")
         self.profile_labels["Median Volume"].config(text=f"Median: {profile.median_volume:,.0f}")
         self.profile_labels["Std Dev"].config(text=f"Std Dev: {profile.std_volume:,.0f}")
-        self.profile_labels["P90 (High)"].config(text=f"P90: {profile.p90_volume:,.0f}")
+        self.profile_labels["P90 (High)"].config(text=f"P90 (High): {profile.p90_volume:,.0f}")
 
-        # Update tree
+        # Clear existing treeview data
         for i in self.tree.get_children():
             self.tree.delete(i)
 
+        # Populate treeview with recent metrics
         for m in reversed(recent_metrics):
-            dt = datetime.fromtimestamp(m.timestamp).strftime('%Y-%m-%d %H:%M')
-            anomaly = "YES" if m.anomaly else ""
+            dt_str = datetime.fromtimestamp(m.timestamp).strftime("%m-%d %H:%M")
+            tag = "anomaly" if m.is_anomaly else m.volume_trend.lower()
+            
             self.tree.insert("", "end", values=(
-                dt, f"{m.volume:,.0f}", f"{m.volume_ratio:.2f}x", f"{m.z_score:.2f}", m.trend, anomaly
-            ))
+                dt_str,
+                f"{m.volume:,.2f}",
+                f"{m.volume_ratio:.2f}",
+                f"{m.z_score:+.2f}",
+                m.volume_trend,
+                "YES" if m.is_anomaly else "no"
+            ), tags=(tag,))
 
-        self.status_lbl.config(text=f"Updated {datetime.now().strftime('%H:%M:%S')}")
+        # Configure row colors
+        self.tree.tag_configure("anomaly", foreground="red")
+        self.tree.tag_configure("expanding", foreground="green")
+        
+        self.status_lbl.config(text=f"Last Updated: {datetime.now().strftime('%H:%M:%S')}")
+
+if __name__ == "__main__":
+    # Standalone test block
+    root = tk.Tk()
+    root.title("Volume Dashboard Test")
+    root.geometry("800x600")
+    coins = ["BTC", "ETH", "XRP"]
+    app = VolumeDashboard(root, coins)
+    app.pack(fill="both", expand=True)
+    root.mainloop()
