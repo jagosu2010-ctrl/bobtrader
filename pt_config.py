@@ -21,6 +21,15 @@ class SystemConfig:
     debug_mode: bool = False
     log_retention_hours: int = 48  # Added for time-based rotation logic
 
+
+@dataclass
+class NotificationConfig:
+    email_address: Optional[str] = None
+    email_app_password: Optional[str] = None
+    discord_webhook_url: Optional[str] = None
+    telegram_bot_token: Optional[str] = None
+    telegram_chat_id: Optional[str] = None
+
 @dataclass
 class PowerTraderConfig:
     trading: Any = None

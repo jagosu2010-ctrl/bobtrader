@@ -1,14 +1,58 @@
 import logging
 from typing import Optional, List
-from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import (
-    MarketOrderRequest, 
-    LimitOrderRequest, 
-    TakeProfitRequest, 
-    StopLossRequest
-)
-from alpaca.trading.enums import OrderSide, TimeInForce, OrderClass
 from pt_config import ConfigManager
+
+try:
+    from alpaca.trading.client import TradingClient
+    from alpaca.trading.requests import (
+        MarketOrderRequest,
+        LimitOrderRequest,
+        TakeProfitRequest,
+        StopLossRequest,
+    )
+    from alpaca.trading.enums import OrderSide, TimeInForce, OrderClass
+    _ALPACA_AVAILABLE = True
+except Exception:
+    # Alpaca not installed; provide minimal stubs so module imports cleanly.
+    _ALPACA_AVAILABLE = False
+
+    class TradingClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def get_account(self):
+            raise RuntimeError("Alpaca SDK not available in this environment")
+
+        def submit_order(self, *args, **kwargs):
+            raise RuntimeError("Alpaca SDK not available in this environment")
+
+        def close_all_positions(self, *args, **kwargs):
+            raise RuntimeError("Alpaca SDK not available in this environment")
+
+    class MarketOrderRequest:
+        def __init__(self, *args, **kwargs):
+            pass
+
+    class LimitOrderRequest(MarketOrderRequest):
+        pass
+
+    class TakeProfitRequest:
+        def __init__(self, *args, **kwargs):
+            pass
+
+    class StopLossRequest:
+        def __init__(self, *args, **kwargs):
+            pass
+
+    class OrderSide:
+        BUY = "buy"
+        SELL = "sell"
+
+    class TimeInForce:
+        GTC = "gtc"
+
+    class OrderClass:
+        BRACKET = "bracket"
 
 # Configure logging for production auditing
 logging.basicConfig(level=logging.INFO, filename='trader_audit.log', 
@@ -18,15 +62,22 @@ class PowerTrader:
     def __init__(self):
         self.cm = ConfigManager().get()
         cfg = self.cm.alpaca
-        
         # Production Safety: Default to paper=True unless explicitly set to False
-        self.is_paper = self.cm.exchange.get("is_sandbox", True)
-        self.client = TradingClient(
-            api_key=cfg.get("api_key"),
-            secret_key=cfg.get("api_secret"),
-            paper=self.is_paper
-        )
-        logging.info(f"Trader Initialized: Provider=Alpaca, Mode={'PAPER' if self.is_paper else 'LIVE'}")
+        try:
+            self.is_paper = self.cm.exchange.get("is_sandbox", True)
+        except Exception:
+            self.is_paper = True
+
+        if _ALPACA_AVAILABLE:
+            self.client = TradingClient(
+                api_key=cfg.get("api_key"),
+                secret_key=cfg.get("api_secret"),
+                paper=self.is_paper,
+            )
+            logging.info(f"Trader Initialized: Provider=Alpaca, Mode={'PAPER' if self.is_paper else 'LIVE'}")
+        else:
+            self.client = TradingClient()
+            logging.warning("Alpaca SDK not available — trading functionality disabled in this environment.")
 
     def format_symbol(self, symbol: str) -> str:
         """Production normalization: Handles crypto pairs and stock tickers."""

@@ -1,8 +1,16 @@
 import tkinter as tk
 from tkinter import ttk
 import threading
-from pt_correlation import CorrelationAnalyzer, calculate_portfolio_correlation
-from pt_position_sizing import PositionSizer
+try:
+    from pt_correlation import CorrelationAnalyzer, calculate_portfolio_correlation
+    from pt_position_sizing import PositionSizer
+    _RISK_AVAILABLE = True
+except Exception as _risk_err:
+    CorrelationAnalyzer = None
+    calculate_portfolio_correlation = None
+    PositionSizer = None
+    _RISK_IMPORT_ERROR = _risk_err
+    _RISK_AVAILABLE = False
 from pt_config import ConfigManager
 import os
 
@@ -20,6 +28,14 @@ class RiskDashboard(ttk.Frame):
         else:
             # Fallback to default path if config section is missing
             self.db_path = "hub_data/trades.db"
+
+        # If correlation/position sizing modules are unavailable, show an error panel
+        if not _RISK_AVAILABLE:
+            err_frame = ttk.Frame(self)
+            ttk.Label(err_frame, text="Risk modules unavailable", foreground="red", font=("Arial", 14, "bold")).pack(pady=20)
+            ttk.Label(err_frame, text=f"Import error: {_RISK_IMPORT_ERROR}").pack(pady=10)
+            err_frame.pack(fill="both", expand=True)
+            return
 
         # 2. Initialize Analyzers
         self.corr_analyzer = CorrelationAnalyzer(self.db_path)

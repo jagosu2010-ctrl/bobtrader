@@ -92,6 +92,164 @@ IMPORTANT: This software places real trades automatically. You are responsible f
 
 ---
 
+## Dependencies (Virtualenv & Windows)
+
+To avoid system-wide package conflicts we recommend using a virtual environment. On Windows you can create and activate one then install dependencies:
+
+PowerShell (recommended):
+
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Command Prompt (cmd.exe):
+
+```cmd
+python -m venv venv
+venv\Scripts\activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+If you encounter errors because optional native packages are missing (for example `pandas` or `numpy`), install them explicitly:
+
+```powershell
+python -m pip install pandas numpy
+python -m pip install alpaca-py
+```
+
+Notes:
+- `requirements.txt` contains most runtime dependencies; installing it should be sufficient for full dashboard functionality.
+- The UI will still launch if some optional packages are missing, but some dashboards (Volume, Risk) will display an in-app message indicating which modules are unavailable.
+- If PowerShell blocks the `Activate.ps1` script, use cmd.exe activation above or run `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` as Administrator.
+
+## Troubleshooting (Windows)
+
+- Missing Python packages (e.g., `ModuleNotFoundError: No module named 'pandas'`): install required packages inside your virtualenv:
+
+```powershell
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements.txt
+```
+
+- If a package with native extensions (like `pandas`/`numpy`) fails to build, either install prebuilt wheels or use Anaconda/Miniconda:
+
+```powershell
+python -m pip install --only-binary :all: pandas numpy
+# or use conda: conda install pandas numpy
+```
+
+- PowerShell blocks `Activate.ps1`: run PowerShell as Administrator and:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+- GUI fails to launch or crashes: reproduce a quick import check to see missing dependencies or errors:
+
+```powershell
+python -c "import pt_hub; print('IMPORT_OK')"
+```
+
+   The printed error will indicate the missing module or exception to fix. The app also displays in-UI messages on dashboards when optional modules are unavailable.
+
+- Permission or access errors while installing: retry with an elevated command prompt or add the `--user` flag to `pip`.
+
+- Can't find `requirements.txt`: ensure you run commands from the project root where [requirements.txt](requirements.txt) exists.
+
+If you want, I can add a short troubleshooting FAQ with common error messages and exact fixes — say the word and I'll add it.
+
+## Troubleshooting FAQ
+
+This FAQ lists common errors you may see during setup or runtime and the most direct fixes.
+
+- Import test (quick check):
+
+```powershell
+python -c "import pt_hub; print('IMPORT_OK')"
+```
+
+   - If you see `ModuleNotFoundError: No module named 'X'` — install the package inside your active virtualenv:
+
+```powershell
+python -m pip install X
+python -m pip install -r requirements.txt
+```
+
+- `ModuleNotFoundError: No module named 'pandas'` or `numpy` build failures:
+
+   - Try installing wheels first:
+
+```powershell
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install --only-binary :all: pandas numpy
+```
+
+   - If that fails on Windows, use Anaconda/Miniconda and run:
+
+```bash
+conda install pandas numpy
+```
+
+- `ModuleNotFoundError: No module named 'alpaca'` or `alpaca-py` errors:
+
+```powershell
+python -m pip install alpaca-py
+```
+
+- PowerShell blocked `Activate.ps1` when activating venv:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+   Or use cmd.exe activation instead:
+
+```cmd
+venv\Scripts\activate
+```
+
+- `sqlite3.OperationalError: database is locked` or concurrent DB errors:
+
+   - Ensure no other process is writing to the DB. Close other app instances and retry.
+   - Increase timeout in modules that open the DB or run maintenance (VACUUM) from a separate script.
+
+- GUI blank, immediate crash, or Toplevel/root window errors:
+
+   - Re-run the quick import test above to capture a traceback. If the traceback shows issues in `pt_hub.py`, paste it here and I'll help patch it.
+
+- Permission errors while installing packages:
+
+   - Re-run pip as Administrator, or add `--user`, or use a virtualenv.
+
+- Still seeing missing packages after install (common venv activation mistake):
+
+```powershell
+python -m pip show pandas
+python -c "import sys; print(sys.executable)"
+```
+
+   - Confirm the Python executable printed is the one inside your `venv` folder.
+
+- Missing API keys or `r_key.txt` / `r_secret.txt` issues:
+
+   - Make sure you completed the Settings → Robinhood API Setup wizard in the Hub. Files are created in the project root. If not, create them manually with the keys (keep them secret).
+
+- If a dependency fails to compile (native extensions):
+
+   - Install build tools: on Windows install the Visual C++ Build Tools, or use prebuilt wheels (`--only-binary :all:`) or Conda.
+
+- How to capture a reproducible error for help:
+
+   1. Activate the project virtualenv.
+ 2. Run the import test: `python -c "import pt_hub; print('IMPORT_OK')"` or start the GUI `python pt_hub.py` and copy the full traceback.
+ 3. Paste the traceback into an issue or here and I will provide the exact fix.
+
+If you'd like, I can expand these entries with exact example tracebacks and step-by-step fixes for each one — tell me which errors you've seen and I'll add targeted solutions.
+
 ## Step 4 — Start PowerTrader AI
 
 From the same Command Prompt window (inside your PowerTrader folder), run:
@@ -190,10 +348,10 @@ A TRADE WILL START FOR A COIN IF THAT COIN REACHES A LONG LEVEL OF 3 OR HIGHER W
 ---
 
 ### Multi-Exchange Price Aggregation
-- **Unified Interface**: ExchangeManager for KuCoin, Binance, and Coinbase
+- **Unified Interface**: ExchangeManager for Binance and Coinbase
 - **Cross-Exchange Price**: Median/VWAP across multiple exchanges
 - **Arbitrage Monitoring**: Automatic detection of price spreads between exchanges
-- **Fallback Chain**: KuCoin → Binance → Coinbase for reliability
+- **Fallback Chain**: Binance → Coinbase for reliability
 - **Real-time Verification**: Price data verification before trading decisions
 
 **Modules**: pt_exchanges.py (1006 lines), pt_thinker_exchanges.py (100 lines)

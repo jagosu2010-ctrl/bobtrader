@@ -4,8 +4,13 @@ Updated for safe database concurrency and portfolio weighting.
 """
 
 import sqlite3
-import pandas as pd
 import numpy as np
+try:
+    import pandas as pd
+    _PD_AVAILABLE = True
+except Exception:
+    pd = None
+    _PD_AVAILABLE = False
 from datetime import datetime, timedelta
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
@@ -60,25 +65,68 @@ class CorrelationAnalyzer:
                         continue
 
                     try:
-                        query = """
-                            SELECT timestamp, close_price FROM trade_exits 
-                            WHERE symbol = ? AND timestamp >= datetime('now', ?)
-                            ORDER BY timestamp DESC LIMIT 1000
-                        """
-                        lookback = f'-{timeframe_days} days'
-                        
-                        df_a = pd.read_sql_query(query, conn, params=(symbol_a, lookback))
-                        df_b = pd.read_sql_query(query, conn, params=(symbol_b, lookback))
+                        if _PD_AVAILABLE:
+                            query = """
+                                SELECT timestamp, close_price FROM trade_exits 
+                                WHERE symbol = ? AND timestamp >= datetime('now', ?)
+                                ORDER BY timestamp DESC LIMIT 1000
+                            """
+                            lookback = f'-{timeframe_days} days'
+                            df_a = pd.read_sql_query(query, conn, params=(symbol_a, lookback))
+                            df_b = pd.read_sql_query(query, conn, params=(symbol_b, lookback))
 
-                        df_merged = pd.merge(df_a, df_b, on="timestamp", how="inner").dropna()
+                            df_merged = pd.merge(df_a, df_b, on="timestamp", how="inner").dropna()
 
-                        if len(df_merged) >= min_data_points:
-                            correlation = df_merged['close_price_x'].pct_change().corr(
-                                df_merged['close_price_y'].pct_change()
-                            )
-                            correlation_matrix[symbol_a][symbol_b] = correlation if not pd.isna(correlation) else 0.0
+                            if len(df_merged) >= min_data_points:
+                                correlation = df_merged['close_price_x'].pct_change().corr(
+                                    df_merged['close_price_y'].pct_change()
+                                )
+                                correlation_matrix[symbol_a][symbol_b] = float(correlation) if not pd.isna(correlation) else 0.0
+                            else:
+                                correlation_matrix[symbol_a][symbol_b] = 0.0
                         else:
-                            correlation_matrix[symbol_a][symbol_b] = 0.0
+                            # Fallback when pandas is not available: use sqlite3 rows and pure-python correlation
+                            def fetch_prices(sym):
+                                cursor.execute(
+                                    "SELECT timestamp, close_price FROM trade_exits WHERE symbol = ? AND timestamp >= datetime('now', ?) ORDER BY timestamp DESC LIMIT 1000",
+                                    (sym, f'-{timeframe_days} days')
+                                )
+                                rows = cursor.fetchall()
+                                # rows are (timestamp, close_price)
+                                return {r[0]: r[1] for r in rows}
+
+                            pa = fetch_prices(symbol_a)
+                            pb = fetch_prices(symbol_b)
+                            common = set(pa.keys()) & set(pb.keys())
+                            if len(common) < min_data_points:
+                                correlation_matrix[symbol_a][symbol_b] = 0.0
+                            else:
+                                # Build ordered lists by timestamp
+                                times = sorted(common)
+                                a_prices = [pa[t] for t in times]
+                                b_prices = [pb[t] for t in times]
+
+                                def pct_changes(arr):
+                                    return [ (arr[i] - arr[i-1]) / arr[i-1] if arr[i-1] != 0 else 0.0 for i in range(1, len(arr)) ]
+
+                                a_pct = pct_changes(a_prices)
+                                b_pct = pct_changes(b_prices)
+
+                                if len(a_pct) < 2 or len(b_pct) < 2:
+                                    correlation_matrix[symbol_a][symbol_b] = 0.0
+                                else:
+                                    # Pearson correlation
+                                    def pearson(x,y):
+                                        mx = sum(x)/len(x)
+                                        my = sum(y)/len(y)
+                                        num = sum((xi-mx)*(yi-my) for xi,yi in zip(x,y))
+                                        denx = (sum((xi-mx)**2 for xi in x))**0.5
+                                        deny = (sum((yi-my)**2 for yi in y))**0.5
+                                        if denx==0 or deny==0:
+                                            return 0.0
+                                        return num/(denx*deny)
+
+                                    correlation_matrix[symbol_a][symbol_b] = float(pearson(a_pct, b_pct))
 
                     except Exception as e:
                         print(f"[Correlation] Error between {symbol_a}/{symbol_b}: {e}")

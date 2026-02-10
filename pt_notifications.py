@@ -50,6 +50,7 @@ except ImportError:
     TELEGRAM_AVAILABLE = False
 
 from pt_config import ConfigManager, NotificationConfig
+from typing import Any
 
 DB_PATH = Path("hub_data/notifications.db")
 
@@ -68,9 +69,6 @@ class NotificationPlatform(Enum):
     EMAIL = "email"
     DISCORD = "discord"
     TELEGRAM = "telegram"
-
-
-# NotificationConfig is imported from pt_config
 
 
 @dataclass
@@ -308,7 +306,7 @@ class NotificationDatabase:
 
 
 class BaseNotifier:
-    def __init__(self, config: NotificationConfig, db: NotificationDatabase):
+    def __init__(self, config: Any, db: NotificationDatabase):
         self.config = config
         self.db = db
         self.enabled = False

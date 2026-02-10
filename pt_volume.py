@@ -1,4 +1,9 @@
-import pandas as pd
+try:
+    import pandas as pd
+    _PD_AVAILABLE = True
+except Exception:
+    pd = None
+    _PD_AVAILABLE = False
 import numpy as np
 from datetime import datetime, timezone
 from dataclasses import dataclass
@@ -46,6 +51,10 @@ class VolumeDataFetcher:
         }
         alpaca_tf = tf_map.get(interval.lower(), TimeFrame.Hour)
 
+        if not _PD_AVAILABLE:
+            print("[VolumeFetcher] pandas not available; fetch_candles returning empty list")
+            return []
+
         try:
             # Create request object
             request_params = CryptoBarsRequest(
@@ -58,14 +67,14 @@ class VolumeDataFetcher:
             # Execute request
             bars = self.client.get_crypto_bars(request_params)
             df = bars.df
-            
+
             if df is None or df.empty:
                 print(f"[VolumeFetcher] No data returned for {formatted_symbol}")
                 return []
 
             # bars.df is a MultiIndex (symbol, timestamp). We isolate our symbol.
             symbol_df = df.xs(formatted_symbol)
-            
+
             candles = []
             for ts, row in symbol_df.iterrows():
                 candles.append(Candle(
@@ -76,7 +85,7 @@ class VolumeDataFetcher:
                     close=float(row['close']),
                     volume=float(row['volume']) # Alpaca uses 'volume' attribute
                 ))
-            
+
             return candles
 
         except Exception as e:

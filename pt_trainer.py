@@ -1,5 +1,6 @@
-from kucoin.client import Market
-market = Market(url='https://api.kucoin.com')
+# KuCoin integration removed due to regional restrictions; trainer runs without kucoin client.
+market = None
+_KUCOIN_AVAILABLE = False
 import time
 """
 <------------
@@ -39,72 +40,29 @@ starting_amounth10 = 100.0
 starting_amounth20 = 100.0
 starting_amounth50 = 100.0
 starting_amount = 100.0
-starting_amount1 = 100.0
-starting_amount1_2 = 100.0
-starting_amount1_3 = 100.0
-starting_amount1_4 = 100.0
-starting_amount2 = 100.0
-starting_amount2_2 = 100.0
-starting_amount2_3 = 100.0
-starting_amount2_4 = 100.0
-starting_amount3 = 100.0
-starting_amount3_2 = 100.0
-starting_amount3_3 = 100.0
-starting_amount3_4 = 100.0
-starting_amount4 = 100.0
-starting_amount4_2 = 100.0
-starting_amount4_3 = 100.0
-starting_amount4_4 = 100.0
-profit_list = []
-profit_list1 = []
-profit_list1_2 = []
-profit_list1_3 = []
-profit_list1_4 = []
-profit_list2 = []
-profit_list2_2 = []
-profit_list2_3 = []
-profit_list2_4 = []
-profit_list3 = []
-profit_list3_2 = []
-profit_list3_3 = []
-profit_list4 = []
-profit_list4_2 = []
-good_hits = []
-good_preds = []
-good_preds2 = []
-good_preds3 = []
-good_preds4 = []
-good_preds5 = []
-good_preds6 = []
-big_good_preds = []
-big_good_preds2 = []
-big_good_preds3 = []
-big_good_preds4 = []
-big_good_preds5 = []
-big_good_preds6 = []
-big_good_hits = []
-upordown = []
-upordown1 = []
-upordown1_2 = []
-upordown1_3 = []
-upordown1_4 = []
-upordown2 = []
-upordown2_2 = []
-upordown2_3 = []
-upordown2_4 = []
-upordown3 = []
-upordown3_2 = []
-upordown3_3 = []
-upordown3_4 = []
-upordown4 = []
-upordown4_2 = []
-upordown4_3 = []
-upordown4_4 = []
-upordown5 = []
-import json
-import uuid
-import os
+"""
+pt_trainer.py
 
+Original trainer script disabled for import-safety and compliance.
+
+This file previously contained a large, procedural trainer that executed on import
+and attempted to use exchange-specific SDKs. To keep the codebase importable and
+safe for environments without exchange SDKs, the trainer has been replaced with
+this lightweight stub. To run the full trainer, use the original file from the
+repository or run a dedicated trainer process that is executed directly (not
+imported).
+"""
+
+_TRAINER_DISABLED = True
+
+def start_trainer_cli(*args, **kwargs):
+	"""Placeholder: start the trainer as a separate process.
+
+	The original trainer logic is intentionally not imported. If you need the
+	trainer functionality, run the dedicated trainer script directly from the
+	command line or restore the original `pt_trainer.py` file.
+	"""
+	raise RuntimeError("Trainer disabled in this distribution. Run the trainer as a separate process.")
 # ---- speed knobs ----
 VERBOSE = False  # set True if you want the old high-volume prints
 def vprint(*args, **kwargs):

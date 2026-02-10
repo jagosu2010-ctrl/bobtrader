@@ -12,10 +12,15 @@ License: Apache 2.0
 
 import sqlite3
 import os
-import pandas as pd
 import numpy as np
+try:
+    import pandas as pd
+    _PD_AVAILABLE = True
+except Exception:
+    pd = None
+    _PD_AVAILABLE = False
 from datetime import datetime, timedelta
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from dataclasses import dataclass
 
 
@@ -122,6 +127,10 @@ class PositionSizer:
         if not self.cursor:
             self._connect()
 
+        if not _PD_AVAILABLE:
+            # Pandas unavailable: return safe default
+            return 0.0
+
         try:
             cutoff_date = datetime.now() - timedelta(days=lookback_days * 2)
 
@@ -168,7 +177,7 @@ class PositionSizer:
             print(f"[PositionSizer] Error calculating ATR for {symbol}: {e}")
             return 0.0
 
-    def get_market_volatility(self, symbol: str, period: int = 30) -> pd.DataFrame:
+    def get_market_volatility(self, symbol: str, period: int = 30) -> Any:
         """
         Get market volatility data for a symbol.
 
@@ -181,6 +190,13 @@ class PositionSizer:
         """
         if not self.cursor:
             self._connect()
+
+        if not _PD_AVAILABLE:
+            # Pandas unavailable: return empty DataFrame
+            try:
+                return pd.DataFrame()
+            except Exception:
+                return type('DFStub', (), {})()
 
         try:
             cutoff_date = datetime.now() - timedelta(days=period)

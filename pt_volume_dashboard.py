@@ -1,15 +1,33 @@
 import tkinter as tk
 from tkinter import ttk
 import time
-from pt_volume import VolumeAnalyzer, VolumeDataFetcher, VolumeProfile
 import threading
 from datetime import datetime, timedelta
+
+# Optional import: allow the dashboard to load even if heavy dependencies are missing
+try:
+    from pt_volume import VolumeAnalyzer, VolumeDataFetcher, VolumeProfile
+    _VOLUME_AVAILABLE = True
+except Exception as _vol_err:
+    VolumeAnalyzer = None
+    VolumeDataFetcher = None
+    VolumeProfile = None
+    _VOLUME_AVAILABLE = False
+    _VOLUME_IMPORT_ERROR = _vol_err
 
 class VolumeDashboard(ttk.Frame):
     def __init__(self, parent, coin_list, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.coin_list = coin_list
         self.current_coin = coin_list[0] if coin_list else "BTC"
+
+        # If core volume functionality isn't available, show an error panel but allow app to continue
+        if not _VOLUME_AVAILABLE:
+            err_frame = ttk.Frame(self)
+            ttk.Label(err_frame, text="Volume module unavailable", foreground="red", font=("Arial", 14, "bold")).pack(pady=20)
+            ttk.Label(err_frame, text=f"Import error: {_VOLUME_IMPORT_ERROR}").pack(pady=10)
+            err_frame.pack(fill="both", expand=True)
+            return
 
         self._setup_ui()
         self.fetcher = VolumeDataFetcher()

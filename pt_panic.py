@@ -1,6 +1,12 @@
 import logging
-from alpaca.trading.client import TradingClient
 from pt_config import ConfigManager
+
+try:
+    from alpaca.trading.client import TradingClient
+    _ALPACA_AVAILABLE = True
+except Exception:
+    TradingClient = None
+    _ALPACA_AVAILABLE = False
 
 # Audit logging for CISO review
 logging.basicConfig(level=logging.INFO, filename='panic_audit.log', 
@@ -10,7 +16,10 @@ def trigger_panic():
     print("!!! PANIC BUTTON ACTIVATED !!!")
     cm = ConfigManager().get()
     cfg = cm.alpaca
-    
+    if not _ALPACA_AVAILABLE:
+        print("[Panic] Alpaca SDK not available; panic actions are disabled in this environment.")
+        return
+
     # 1. Initialize Client
     client = TradingClient(
         api_key=cfg.get("api_key"),

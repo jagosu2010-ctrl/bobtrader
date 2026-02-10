@@ -38,7 +38,6 @@ import statistics
 
 
 class ExchangeType(Enum):
-    KUCOIN = "kucoin"
     BINANCE = "binance"
     COINBASE = "coinbase"
 
@@ -124,103 +123,8 @@ class ExchangeError(Exception):
     pass
 
 
-class KuCoinExchange(ExchangeBase):
-    BASE_URL = "https://api.kucoin.com"
-
-    TIMEFRAME_MAP = {
-        "1min": "1min",
-        "5min": "5min",
-        "15min": "15min",
-        "30min": "30min",
-        "1hour": "1hour",
-        "2hour": "2hour",
-        "4hour": "4hour",
-        "8hour": "8hour",
-        "12hour": "12hour",
-        "1day": "1day",
-        "1week": "1week",
-    }
-
-    def normalize_symbol(self, coin: str, quote: str = "USDT") -> str:
-        return f"{coin.upper()}-{quote.upper()}"
-
-    def normalize_timeframe(self, tf: str) -> str:
-        return self.TIMEFRAME_MAP.get(tf, "1hour")
-
-    def get_ticker(self, symbol: str) -> Ticker:
-        data = self._request(
-            "GET", f"{self.BASE_URL}/api/v1/market/stats", params={"symbol": symbol}
-        )
-
-        if data.get("code") != "200000":
-            raise ExchangeError(f"KuCoin error: {data.get('msg', 'Unknown error')}")
-
-        stats = data["data"]
-        return Ticker(
-            exchange="kucoin",
-            symbol=symbol,
-            price=float(stats["last"]),
-            bid=float(stats["buy"] or 0),
-            ask=float(stats["sell"] or 0),
-            volume_24h=float(stats["vol"]),
-            timestamp=datetime.now(),
-        )
-
-    def get_candles(
-        self,
-        symbol: str,
-        timeframe: str = "1hour",
-        limit: int = 100,
-        start_time: Optional[int] = None,
-        end_time: Optional[int] = None,
-    ) -> List[OHLCV]:
-        params = {"symbol": symbol, "type": self.normalize_timeframe(timeframe)}
-
-        if start_time:
-            params["startAt"] = start_time
-        if end_time:
-            params["endAt"] = end_time
-
-        data = self._request(
-            "GET", f"{self.BASE_URL}/api/v1/market/candles", params=params
-        )
-
-        if data.get("code") != "200000":
-            raise ExchangeError(f"KuCoin error: {data.get('msg', 'Unknown error')}")
-
-        candles = []
-        for c in data["data"][:limit]:
-            candles.append(
-                OHLCV(
-                    timestamp=int(c[0]),
-                    open=float(c[1]),
-                    close=float(c[2]),
-                    high=float(c[3]),
-                    low=float(c[4]),
-                    volume=float(c[5]),
-                )
-            )
-
-        return sorted(candles, key=lambda x: x.timestamp)
-
-    def get_orderbook(self, symbol: str, depth: int = 20) -> OrderBook:
-        data = self._request(
-            "GET",
-            f"{self.BASE_URL}/api/v1/market/orderbook/level2_20",
-            params={"symbol": symbol},
-        )
-
-        if data.get("code") != "200000":
-            raise ExchangeError(f"KuCoin error: {data.get('msg', 'Unknown error')}")
-
-        book = data["data"]
-        return OrderBook(
-            exchange="kucoin",
-            symbol=symbol,
-            bids=[(float(b[0]), float(b[1])) for b in book["bids"][:depth]],
-            asks=[(float(a[0]), float(a[1])) for a in book["asks"][:depth]],
-            timestamp=datetime.now(),
-        )
+# KuCoin integration removed due to regional restrictions (US jurisdiction).
+# KuCoin-specific classes and enums were intentionally removed.
 
 
 class BinanceExchange(ExchangeBase):
@@ -400,13 +304,12 @@ class ExchangeManager:
         self.exchanges: Dict[str, ExchangeBase] = {}
 
         available = {
-            "kucoin": KuCoinExchange,
             "binance": BinanceExchange,
             "coinbase": CoinbaseExchange,
         }
 
         if enabled_exchanges is None:
-            enabled_exchanges = ["kucoin", "binance", "coinbase"]
+            enabled_exchanges = ["binance", "coinbase"]
 
         for name in enabled_exchanges:
             if name in available:
@@ -416,7 +319,7 @@ class ExchangeManager:
                     print(f"Warning: Could not initialize {name}: {e}")
 
     def get_price(
-        self, coin: str, exchange: str = "kucoin", quote: str = "USDT"
+        self, coin: str, exchange: str = "binance", quote: str = "USDT"
     ) -> float:
         if exchange not in self.exchanges:
             raise ExchangeError(f"Exchange {exchange} not available")
@@ -428,7 +331,7 @@ class ExchangeManager:
         return ticker.price
 
     def get_ticker(
-        self, coin: str, exchange: str = "kucoin", quote: str = "USDT"
+        self, coin: str, exchange: str = "binance", quote: str = "USDT"
     ) -> Ticker:
         if exchange not in self.exchanges:
             raise ExchangeError(f"Exchange {exchange} not available")
@@ -441,7 +344,7 @@ class ExchangeManager:
     def get_candles(
         self,
         coin: str,
-        exchange: str = "kucoin",
+        exchange: str = "binance",
         timeframe: str = "1hour",
         limit: int = 100,
         quote: str = "USDT",
@@ -455,7 +358,7 @@ class ExchangeManager:
         return ex.get_candles(symbol, timeframe, limit)
 
     def get_orderbook(
-        self, coin: str, exchange: str = "kucoin", depth: int = 20, quote: str = "USDT"
+        self, coin: str, exchange: str = "binance", depth: int = 20, quote: str = "USDT"
     ) -> OrderBook:
         if exchange not in self.exchanges:
             raise ExchangeError(f"Exchange {exchange} not available")
